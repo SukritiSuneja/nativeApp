@@ -1,4 +1,4 @@
-import { FETCH_EVENTS, UPDATE_EVENT } from '../actions/events/eventsActionTypes'
+import { FETCH_EVENTS, UPDATE_EVENT } from '../actions/types'
 
 const initialState = {
     allEvents: [],

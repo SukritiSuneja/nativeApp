@@ -1,80 +1,34 @@
-import {createStore, applyMiddleware} from 'redux';
-import reduxThunk from 'redux-thunk';
-import axios from 'axios';
-import axiosMiddleware from 'redux-axios-middleware';
-import {persistStore, persistReducer} from 'redux-persist';
-import storage from 'redux-persist/lib/storage'; // defaults to localStorage for web and AsyncStorage for react-native
-import config from '../../config';
-import reducers from '../reducers';
+import thunk from 'redux-thunk';
 import logger from 'redux-logger';
-import createSagaMiddleware from 'redux-saga';
-import rootSaga from '../sagas';
+import {AsyncStorage} from 'react-native';
+import {createStore, compose, applyMiddleware} from 'redux';
+import {persistStore, persistCombineReducers} from 'redux-persist';
 
-/**
- * Create Axios Client to communicate
- */
-const axiosClient = axios.create({
-  baseURL: config.apiUrl,
-  responseType: 'json',
-});
+import Reducers from '../reducers/index';
 
-// Store instance
-export let store = null;
-export let persistor = null;
-
-const persistConfig = {
+const config = {
   key: 'root',
-  storage,
-  whitelist: [
-  ],
-  timeout: 20000,
-  debug: __DEV__,
+  storage: AsyncStorage,
+  blacklist: [],
+  debug: true, //to get useful logging
 };
 
-const sagaMiddleware = createSagaMiddleware();
+const middleware = [thunk];
 
-const persistedReducer = persistReducer(persistConfig, reducers);
+if (__DEV__) {
+  middleware.push(logger);
+}
 
-/**
- * Create the Redux store
- */
-
-export const configureStore = () => {
-  store = createStore(
-    persistedReducer,
-    applyMiddleware(
-      reduxThunk,
-      axiosMiddleware(axiosClient),
-      logger,
-      sagaMiddleware,
-    ),
-  );
-
-  persistor = persistStore(store, null, () => {
-    // console.log({ name: 'Persisited state', value: store.getState() });
-  });
-
-  sagaMiddleware.run(rootSaga);
-  return {store, persistor};
+const reducers = persistCombineReducers(config, Reducers);
+const enhancers = [applyMiddleware(...middleware)];
+const initialState = undefined;
+const persistConfig = {enhancers};
+const Store = createStore(reducers, initialState, compose(...enhancers));
+const Persistor = persistStore(Store, persistConfig, () => {
+  //   console.log('Test', store.getState());
+});
+const configureStore = () => {
+  return {Persistor, Store};
 };
 
-/**
- * Get store
- */
-export const getStore = () => store;
-
-/**
- * Get persistor
- */
-export const getPersistor = () => persistor;
-
-/**
- * Dispatch an action
- */
-export const dispatch = (...args) => store.dispatch(...args);
-
-export default {
-  dispatch,
-  getStore,
-  configureStore,
-};
+export default configureStore;
