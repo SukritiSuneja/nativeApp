@@ -1,0 +1,4 @@
+#Mon Feb 22 09:54:15 IST 2021
+base.0=/Volumes/data/GitHub/nativeApp/android/app/build/intermediates/dex/debug/mergeDexDebug/out/classes.dex
+path.0=classes.dex
+renamed.0=classes.dex
